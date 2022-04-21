@@ -26,6 +26,7 @@ with row3_1:
 
 row6_spacer1, row6_1, row6_spacer2 = st.columns((.2, 7.1, .2))
 with row6_1:
+    st.markdown(" ")
     st.subheader("Predictions for next week:")
     st.markdown(" ")
 
@@ -46,4 +47,5 @@ with row2_4:
 
 row6_spacer1, row6_1, row6_spacer2 = st.columns((.2, 7.1, .2))
 with row6_1:
+    st.markdown(" ")
     st.table(data=df.reset_index(drop=True))
