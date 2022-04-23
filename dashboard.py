@@ -11,14 +11,19 @@ with open('style.css') as f:
 
 ### Data Import ###
 
+
 final_data = pd.read_csv("./data/final_table.csv")
 df = pd.read_csv("./data/this_week.csv")
 df_total = pd.read_csv("./data/df_total.csv")
 
+### DICTIONARIES ###
+
 types = ["Mean","Total","Median","Maximum","Minimum"]
-
+label_attr_dict = {"Goals":"Goals","Halftime Goals":"HT_Goals","Shots On Target":"Shots_Target", "Fouls":"Fouls","Corners":"Corner","Yellow Cards":"Yellow","Red Cards": "Red"}
 label_attr_dict_teams = {"Goals Scored":"Goals","Goals Received":"Goals_Received","Halftime Goals Scored":"HT_Goals","Halftime Goals Received":"HT_Goals_Received","Shots on opposing Goal":"Shots_Target","Shots on own Goal":"Shots_Target_Received", "Fouls":"Fouls", "Got Fouled":"Got_Fouled","Corners":"Corner", "Corners Received":"Corner_Received", "Yellow Cards":"Yellow", "Yellow Cards Received":"Yellow_Received","Red Cards":"Red","Red Cards Received":"Red_Received"}
+dict_correlation = {"Goals":"Delta_Goals", "Halftime Goals":"Delta_HT_Goals","Shots On Target":"Delta_Shots_On_Target","Fouls":"Delta_Foul","Corner":"Delta_Corner","Yellow Cards":"Delta_Yellow","Red Cards":"Delta_Red"}  
 
+### INTRODUCTION ###
 
 row0_spacer1, row0_1, row0_spacer2, row0_2, row0_spacer3 = st.columns((.1, 2.3, .1, 1.3, .1))
 with row0_1:
@@ -32,6 +37,8 @@ with row3_1:
     see_data = st.expander('You can click here to see the raw data first 👉')
     with see_data:
         st.dataframe(data=final_data.reset_index(drop=True))
+
+### NEXT WEEK PREDICTIONS ###
 
 row6_spacer1, row6_1, row6_spacer2 = st.columns((.2, 7.1, .2))
 with row6_1:
@@ -59,8 +66,8 @@ with row6_1:
     st.markdown(" ")
     st.table(data=df.reset_index(drop=True))
 
-#Get Seasons & Teams - methods
 
+#Get Seasons & Teams - methods
 
 def get_unique_seasons_modified(df_total):
     #returns unique season list in the form "Season 13/14" for labels
@@ -91,7 +98,8 @@ def get_unique_teams(df_total):
 
 def filter_teams(df_total):
     df_filtered_team = pd.DataFrame()
-    df_filtered_team = df_total[df_total['Team']]
+    df_filtered_team = df_total['Team']
+    # df_filtered_team = df_total[df_total['Team']]
     return df_filtered_team
 
 def group_measure_by_attribute(aspect,attribute,measure):
@@ -116,28 +124,30 @@ def group_measure_by_attribute(aspect,attribute,measure):
         df_return = df_return.sort_values(by=[attribute], ascending = False)
     return df_return
 
+
 ### SELECTION SLIDER - SEASON SELECTOR ###
 
 
 st.sidebar.markdown("**Select the season range you want to analyze:** 👇")
-
 unique_seasons = get_unique_seasons_modified(df_total)
-
 start_season, end_season = st.sidebar.select_slider('Select the season range you want to include', unique_seasons, value = ["2/3","19/20"])
-
+# df_data_filtered_season = filter_season(df_total)
 df_data_filtered_season = filter_season(df_total)
+
+
 
 ### SELECTION SLIDER - TEAM SELECTOR ###
 
 unique_teams = get_unique_teams(df_total)
-# all_teams_selected = st.sidebar.selectbox('Do you want to only include specific teams? If the answer is yes, please check the box below and then select the team(s) in the new field.', ['Include all available teams','Select teams manually (choose below)'])
-# if all_teams_selected == 'Select teams manually (choose below)':
-#     selected_teams = st.sidebar.multiselect("Select and deselect the teams you would like to include in the analysis. You can clear the current selection by clicking the corresponding x-button on the right", unique_teams, default = unique_teams)
-# df_data_filtered = filter_teams(df_total)        
-# ### SEE DATA ###
-# row6_spacer1, row6_1, row6_spacer2 = st.columns((.2, 7.1, .2))
-# with row6_1:
-#     st.subheader("Currently selected data:")
+all_teams_selected = st.sidebar.selectbox('Do you want to only include specific teams? If the answer is yes, please check the box below and then select the team(s) in the new field.', ['Include all available teams','Select teams manually'])
+if all_teams_selected == 'Select teams manually':
+    selected_teams = st.sidebar.multiselect("Select and deselect the teams you would like to include in the analysis. You can clear all the teams in current selection by clicking the x-button on the right", unique_teams, default = unique_teams)
+df_data_filtered = filter_teams(df_total)        
+
+row6_spacer1, row6_1, row6_spacer2 = st.columns((.2, 7.1, .2))
+with row6_1:
+    st.markdown(" ")
+    st.subheader("Analysis according to currently selected data:")
 
     
 ### PLOTS - TEAM ANALYSIS ###
@@ -166,6 +176,7 @@ def plot_x_per_team(attr,measure):
     df_plot = group_measure_by_attribute("Team",attribute,measure)
 
     ax = sns.barplot(x="aspect", y=attribute, data=df_plot.reset_index(), color = "#0b70f3")
+    
 
     y_str = measure + " " + attr + " " + "per Game"
     if measure == "Absolute":
@@ -195,7 +206,7 @@ def plot_x_per_team(attr,measure):
                    textcoords = 'offset points')
     st.pyplot(fig)
 
-### PLOTS - TEAM ANALYSIS ###
+### PLOTS - SEASON ANALYSIS ###
 
 def plot_x_per_season(attr,measure):
     rc = {'figure.figsize':(8,4.5),
@@ -216,7 +227,7 @@ def plot_x_per_season(attr,measure):
     plt.rcParams.update(rc)
     fig, ax = plt.subplots()
 
-    attribute = label_attr_dict_teams[attr]
+    attribute = label_attr_dict[attr]
     df_plot = pd.DataFrame()
     df_plot = group_measure_by_attribute("Season",attribute,measure)
     ax = sns.barplot(x="aspect", y=attribute, data=df_plot, color = "#b80606")
@@ -247,6 +258,35 @@ def plot_x_per_season(attr,measure):
                    textcoords = 'offset points')
     st.pyplot(fig)
 
+### PLOT - CORRELATION ANALYSIS ###
+
+def plt_attribute_correlation(aspect1, aspect2):
+
+    rc = {'figure.figsize':(5,5),
+          'axes.facecolor':'#0e1117',
+          'axes.edgecolor': '#0e1117',
+          'axes.labelcolor': 'white',
+          'figure.facecolor': '#0e1117',
+          'patch.edgecolor': '#0e1117',
+          'text.color': 'white',
+          'xtick.color': 'white',
+          'ytick.color': 'white',
+          'grid.color': 'grey',
+          'font.size' : 8,
+          'axes.labelsize': 12,
+          'xtick.labelsize': 8,
+          'ytick.labelsize': 8}
+    plt.rcParams.update(rc)
+    fig, ax = plt.subplots()
+    asp1 = dict_correlation[aspect1]
+    asp2 = dict_correlation[aspect2]
+    if(corr_type=="Regression Plot (Recommended)"):
+        ax = sns.regplot(x=asp1, y=asp2, x_jitter=.1, data=df_total, color = '#f21111',scatter_kws={"color": "#0b70f3"},line_kws={"color": "#c2dbfc"})
+    if(corr_type=="Standard Scatter Plot"):
+        ax = sns.scatterplot(x=asp1, y=asp2, data=df_total, color = '#0b70f3')
+    ax.set(xlabel = aspect1, ylabel = aspect2)
+    st.pyplot(fig, ax)
+
 
 ### TEAM ANALYSIS ###
 
@@ -271,15 +311,44 @@ with row5_2:
 
 row6_spacer1, row6_1, row6_spacer2 = st.columns((.2, 7.1, .2))
 with row6_1:
+    st.markdown(" ")
+    st.markdown(" ")
+    st.markdown(" ")
     st.subheader('Analysis Per Season')
 row7_spacer1, row7_1, row7_spacer2, row7_2, row7_spacer3  = st.columns((.2, 2.3, .4, 4.4, .2))
 with row7_1:
     st.markdown('Statistics for all seasons of the EPL analysed on various measures.')
-    st.markdown('Answers question such as: Which season had teams score the most goals? Has the amount of passes per games changed?')    
-    plot_x_per_season_selected = st.selectbox ("Which attribute do you want to analyze?", list(label_attr_dict_teams.keys()), key = 'attribute_season')
+    st.markdown('Answers question such as: Which season had teams score the most goals? What is the total number of red cards received in each season?')
+    plot_x_per_season_selected = st.selectbox ("Which attribute do you want to analyze?", list(label_attr_dict.keys()), key = 'attribute_season')
     plot_x_per_season_type = st.selectbox ("Which measure do you want to analyze?", types, key = 'measure_season')
 with row7_2:
     #  if all_teams_selected != 'Select teams manually (choose below)' or selected_teams:
     plot_x_per_season(plot_x_per_season_selected,plot_x_per_season_type)
     # else:
     #     st.warning('Please select at least one team')
+
+### CORRELATION ANALYSIS ###
+
+corr_plot_types = ["Regression Plot (Recommended)","Standard Scatter Plot"]
+
+row10_spacer1, row10_1, row10_spacer2 = st.columns((.2, 7.1, .2))
+with row10_1:
+    st.markdown(" ")
+    st.markdown(" ")
+    st.markdown(" ")
+    st.subheader('Correlation of Game Stats')
+row11_spacer1, row11_1, row11_spacer2, row11_2, row11_spacer3  = st.columns((.2, 2.3, .4, 4.4, .2))
+with row11_1:
+    st.markdown("Investigate the correlation of attributes.")
+    st.markdown("(📈) - Postive Correlation") 
+    st.markdown("(📉)- Negative Correlation")
+    st.markdown("Answers questions such as:  Do teams that have more shots on targets have more corners? Do the team's shots on target say anything about the probablility of goals")    
+    corr_type = st.selectbox ("What type of correlation plot do you want to see?", corr_plot_types)
+    y_axis_aspect2 = st.selectbox ("Which attribute do you want on the y-axis?", list(dict_correlation.keys()))
+    x_axis_aspect1 = st.selectbox ("Which attribute do you want on the x-axis?", list(dict_correlation.keys()))
+with row11_2:
+    if all_teams_selected != 'Select teams manually (choose below)' or selected_teams:
+        plt_attribute_correlation(x_axis_aspect1, y_axis_aspect2)
+    else:
+        st.warning('Please select at least one team')
+    
