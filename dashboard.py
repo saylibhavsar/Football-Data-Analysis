@@ -11,7 +11,6 @@ with open('style.css') as f:
 
 ### Data Import ###
 
-
 final_data = pd.read_csv("./data/final_table.csv")
 df = pd.read_csv("./data/this_week.csv")
 df_total = pd.read_csv("./data/df_total.csv")
