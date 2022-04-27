@@ -14,10 +14,12 @@ with open('style.css') as f:
 final_data = pd.read_csv("./data/final_table.csv")
 df = pd.read_csv("./data/this_week.csv")
 df_total = pd.read_csv("./data/df_total.csv")
+df_database = pd.read_csv("./data/data_by_seasons.csv")
 
 ### DICTIONARIES ###
 
 types = ["Mean","Total","Median","Maximum","Minimum"]
+
 label_attr_dict = {"Goals":"Goals","Halftime Goals":"HT_Goals","Shots On Target":"Shots_Target", "Fouls":"Fouls","Corners":"Corner","Yellow Cards":"Yellow","Red Cards": "Red"}
 label_attr_dict_teams = {"Goals Scored":"Goals","Goals Received":"Goals_Received","Halftime Goals Scored":"HT_Goals","Halftime Goals Received":"HT_Goals_Received","Shots on opposing Goal":"Shots_Target","Shots on own Goal":"Shots_Target_Received", "Fouls":"Fouls", "Got Fouled":"Got_Fouled","Corners":"Corner", "Corners Received":"Corner_Received", "Yellow Cards":"Yellow", "Yellow Cards Received":"Yellow_Received","Red Cards":"Red","Red Cards Received":"Red_Received"}
 dict_correlation = {"Goals":"Delta_Goals", "Halftime Goals":"Delta_HT_Goals","Shots On Target":"Delta_Shots_On_Target","Fouls":"Delta_Foul","Corner":"Delta_Corner","Yellow Cards":"Delta_Yellow","Red Cards":"Delta_Red"}  
@@ -68,9 +70,9 @@ with row6_1:
 
 #Get Seasons & Teams - methods
 
-def get_unique_seasons_modified(df_total):
+def get_unique_seasons_modified(df_data):
     #returns unique season list in the form "Season 13/14" for labels
-    unique_seasons = np.unique(df_total['Season']).tolist()
+    unique_seasons = np.unique(df_data['Season']).tolist()
     seasons_modified = []
     for s,season in enumerate(unique_seasons):
         if s==0:
@@ -80,7 +82,7 @@ def get_unique_seasons_modified(df_total):
         seasons_modified.append(season.replace("-","/"))
     return seasons_modified
 
-def filter_season(df_total):
+def filter_season(df_data):
     df_filtered_season = pd.DataFrame()
     seasons = np.unique(df_total.Season).tolist() #season list "13-14"
     start_raw = start_season.replace("/","-").replace(" ","") #get raw start season "13-14"
@@ -88,35 +90,37 @@ def filter_season(df_total):
     start_index = seasons.index(start_raw)
     end_index = seasons.index(end_raw)+1
     seasons_selected = seasons[start_index:end_index]
-    df_filtered_season = df_total[df_total['Season'].isin(seasons_selected)]
+    df_filtered_season = df_data[df_data['Season'].isin(seasons_selected)]
     return df_filtered_season
 
-def get_unique_teams(df_total):
-    unique_teams = np.unique(df_total.Team).tolist()
+def get_unique_teams(df_data):
+    unique_teams = np.unique(df_data.Team).tolist()
     return unique_teams
 
-def filter_teams(df_total):
+def filter_teams(df_data):
     df_filtered_team = pd.DataFrame()
-    df_filtered_team = df_total['Team']
-    # df_filtered_team = df_total[df_total['Team']]
-    return df_filtered_team
+    if all_teams_selected == 'Select teams manually (choose below)':
+        df_filtered_team = df_data[df_data['Team'].isin(selected_teams)]
+        return df_filtered_team
+    return df_data
 
 def group_measure_by_attribute(aspect,attribute,measure):
+    df_data = df_data_filtered
     df_return = pd.DataFrame()
     if(measure == "Total"):
-        df_return = df_total.groupby([aspect]).sum()            
+        df_return = df_data.groupby([aspect]).sum()            
     
     if(measure == "Mean"):
-        df_return = df_total.groupby([aspect]).mean()
+        df_return = df_data.groupby([aspect]).mean()
         
     if(measure == "Median"):
-        df_return = df_total.groupby([aspect]).median()
-    
+        df_return = df_data.groupby([aspect]).median()
+
     if(measure == "Minimum"):
-        df_return = df_total.groupby([aspect]).min()
+        df_return = df_data.groupby([aspect]).min()
     
     if(measure == "Maximum"):
-        df_return = df_total.groupby([aspect]).max()
+        df_return = df_data.groupby([aspect]).max()
     
     df_return["aspect"] = df_return.index
     if aspect == "team":
@@ -128,9 +132,8 @@ def group_measure_by_attribute(aspect,attribute,measure):
 
 
 st.sidebar.markdown("**Select the season range you want to analyze:** 👇")
-unique_seasons = get_unique_seasons_modified(df_total)
+unique_seasons = get_unique_seasons_modified(df_database)
 start_season, end_season = st.sidebar.select_slider('Select the season range you want to include', unique_seasons, value = ["2/3","19/20"])
-# df_data_filtered_season = filter_season(df_total)
 df_data_filtered_season = filter_season(df_total)
 
 
@@ -148,7 +151,7 @@ with row6_1:
     st.markdown(" ")
     st.subheader("Analysis according to currently selected data:")
 
-    
+
 ### PLOTS - TEAM ANALYSIS ###
 
 def plot_x_per_team(attr,measure): 
@@ -229,7 +232,7 @@ def plot_x_per_season(attr,measure):
     attribute = label_attr_dict[attr]
     df_plot = pd.DataFrame()
     df_plot = group_measure_by_attribute("Season",attribute,measure)
-    ax = sns.barplot(x="aspect", y=attribute, data=df_plot, color = "#b80606")
+    ax = sns.barplot(x="aspect", y=attribute, data=df_plot, color = "#0b70f3")
 
     y_str = measure + " " + attr + " " + " per Team"
     if measure == "Absolute":
@@ -260,7 +263,7 @@ def plot_x_per_season(attr,measure):
 ### PLOT - CORRELATION ANALYSIS ###
 
 def plt_attribute_correlation(aspect1, aspect2):
-
+    df_plot = df_data_filtered
     rc = {'figure.figsize':(5,5),
           'axes.facecolor':'#0e1117',
           'axes.edgecolor': '#0e1117',
@@ -303,7 +306,10 @@ with row5_1:
     plot_x_per_team_type = st.selectbox ("Which measure do you want to analyze?", types, key = 'measure_team')
     specific_team_colors = st.checkbox("Use team specific color scheme")
 with row5_2:
-    plot_x_per_team(plot_x_per_team_selected, plot_x_per_team_type)
+    if all_teams_selected != 'Select teams manually (choose below)' or selected_teams:
+        plot_x_per_team(plot_x_per_team_selected, plot_x_per_team_type)
+    else:
+        st.warning('Please select at least one team')
 
 
 ### SEASON ANALYSIS ###
@@ -321,10 +327,10 @@ with row7_1:
     plot_x_per_season_selected = st.selectbox ("Which attribute do you want to analyze?", list(label_attr_dict.keys()), key = 'attribute_season')
     plot_x_per_season_type = st.selectbox ("Which measure do you want to analyze?", types, key = 'measure_season')
 with row7_2:
-    #  if all_teams_selected != 'Select teams manually (choose below)' or selected_teams:
-    plot_x_per_season(plot_x_per_season_selected,plot_x_per_season_type)
-    # else:
-    #     st.warning('Please select at least one team')
+    if all_teams_selected != 'Select teams manually (choose below)' or selected_teams:
+        plot_x_per_season(plot_x_per_season_selected,plot_x_per_season_type)
+    else:
+        st.warning('Please select at least one team')
 
 ### CORRELATION ANALYSIS ###
 
