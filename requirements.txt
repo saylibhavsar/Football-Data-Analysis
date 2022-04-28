@@ -1,6 +1,4 @@
 bs4==0.0.1
-conda==4.12.0
-conda-build==3.21.5
 matplotlib
 matplotlib-inline
 numpy
