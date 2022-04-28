@@ -8,6 +8,5 @@ regex
 requests
 scikit-image==0.18.3
 scikit-learn
-scikit-learn-intelex==2021.20210714.100439
 seaborn
 streamlit==1.8.1
