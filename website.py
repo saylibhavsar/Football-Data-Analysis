@@ -14,7 +14,6 @@ with open('style.css') as f:
 final_data = pd.read_csv("./data/final_table.csv")
 df = pd.read_csv("./data/this_week.csv")
 df_total = pd.read_csv("./data/df_total.csv")
-df_database = pd.read_csv("./data/data_by_seasons.csv")
 
 ### DICTIONARIES ###
 
@@ -68,44 +67,8 @@ with row6_1:
     st.table(data=df.reset_index(drop=True))
 
 
-#Get Seasons & Teams - methods
-
-def get_unique_seasons_modified(df_data):
-    #returns unique season list in the form "Season 13/14" for labels
-    unique_seasons = np.unique(df_data['Season']).tolist()
-    seasons_modified = []
-    for s,season in enumerate(unique_seasons):
-        if s==0:
-            season = " " + season
-        if s==len(unique_seasons)-1:
-            season = season + " "
-        seasons_modified.append(season.replace("-","/"))
-    return seasons_modified
-
-def filter_season(df_data):
-    df_filtered_season = pd.DataFrame()
-    seasons = np.unique(df_total.Season).tolist() #season list "13-14"
-    start_raw = start_season.replace("/","-").replace(" ","") #get raw start season "13-14"
-    end_raw = end_season.replace("/","-").replace(" ","") #get raw end season "19-20"
-    start_index = seasons.index(start_raw)
-    end_index = seasons.index(end_raw)+1
-    seasons_selected = seasons[start_index:end_index]
-    df_filtered_season = df_data[df_data['Season'].isin(seasons_selected)]
-    return df_filtered_season
-
-def get_unique_teams(df_data):
-    unique_teams = np.unique(df_data.Team).tolist()
-    return unique_teams
-
-def filter_teams(df_data):
-    df_filtered_team = pd.DataFrame()
-    if all_teams_selected == 'Select teams manually (choose below)':
-        df_filtered_team = df_data[df_data['Team'].isin(selected_teams)]
-        return df_filtered_team
-    return df_data
-
 def group_measure_by_attribute(aspect,attribute,measure):
-    df_data = df_data_filtered
+    df_data = df_total
     df_return = pd.DataFrame()
     if(measure == "Total"):
         df_return = df_data.groupby([aspect]).sum()            
@@ -128,43 +91,18 @@ def group_measure_by_attribute(aspect,attribute,measure):
     return df_return
 
 
-### SELECTION SLIDER - SEASON SELECTOR ###
-
-
-st.sidebar.markdown("**Select the season range you want to analyze:** 👇")
-unique_seasons = get_unique_seasons_modified(df_database)
-start_season, end_season = st.sidebar.select_slider('Select the season range you want to include', unique_seasons, value = ["2/3","19/20"])
-df_data_filtered_season = filter_season(df_total)
-
-
-
-### SELECTION SLIDER - TEAM SELECTOR ###
-
-unique_teams = get_unique_teams(df_total)
-all_teams_selected = st.sidebar.selectbox('Do you want to only include specific teams? If the answer is yes, please check the box below and then select the team(s) in the new field.', ['Include all available teams','Select teams manually'])
-if all_teams_selected == 'Select teams manually':
-    selected_teams = st.sidebar.multiselect("Select and deselect the teams you would like to include in the analysis. You can clear all the teams in current selection by clicking the x-button on the right", unique_teams, default = unique_teams)
-df_data_filtered = filter_teams(df_total)        
-
-row6_spacer1, row6_1, row6_spacer2 = st.columns((.2, 7.1, .2))
-with row6_1:
-    st.markdown(" ")
-    st.subheader("Analysis according to currently selected data:")
-
-
 ### PLOTS - TEAM ANALYSIS ###
 
 def plot_x_per_team(attr,measure): 
     rc = {'figure.figsize':(8,4.5),
-          'axes.facecolor':'#0e1117',
-          'axes.edgecolor': '#0e1117',
-          'axes.labelcolor': 'white',
-          'figure.facecolor': '#0e1117',
-          'patch.edgecolor': '#0e1117',
-          'text.color': 'white',
-          'xtick.color': 'white',
-          'ytick.color': 'white',
-          'grid.color': 'grey',
+          'axes.facecolor':'white',
+          'axes.edgecolor': 'white',
+          'axes.labelcolor': 'black',
+          'figure.facecolor': 'white',
+          'patch.edgecolor': 'white',
+          'text.color': 'black',
+          'xtick.color': 'black',
+          'ytick.color': 'black',
           'font.size' : 8,
           'axes.labelsize': 12,
           'xtick.labelsize': 8,
@@ -212,15 +150,14 @@ def plot_x_per_team(attr,measure):
 
 def plot_x_per_season(attr,measure):
     rc = {'figure.figsize':(8,4.5),
-          'axes.facecolor':'#0e1117',
-          'axes.edgecolor': '#0e1117',
-          'axes.labelcolor': 'white',
-          'figure.facecolor': '#0e1117',
-          'patch.edgecolor': '#0e1117',
-          'text.color': 'white',
-          'xtick.color': 'white',
-          'ytick.color': 'white',
-          'grid.color': 'grey',
+          'axes.facecolor':'white',
+          'axes.edgecolor': 'white',
+          'axes.labelcolor': 'black',
+          'figure.facecolor': 'white',
+          'patch.edgecolor': 'white',
+          'text.color': 'black',
+          'xtick.color': 'black',
+          'ytick.color': 'black',
           'font.size' : 8,
           'axes.labelsize': 12,
           'xtick.labelsize': 8,
@@ -263,17 +200,16 @@ def plot_x_per_season(attr,measure):
 ### PLOT - CORRELATION ANALYSIS ###
 
 def plt_attribute_correlation(aspect1, aspect2):
-    df_plot = df_data_filtered
+    # df_plot = df_data_filtered
     rc = {'figure.figsize':(5,5),
-          'axes.facecolor':'#0e1117',
-          'axes.edgecolor': '#0e1117',
-          'axes.labelcolor': 'white',
-          'figure.facecolor': '#0e1117',
-          'patch.edgecolor': '#0e1117',
-          'text.color': 'white',
-          'xtick.color': 'white',
-          'ytick.color': 'white',
-          'grid.color': 'grey',
+          'axes.facecolor':'white',
+          'axes.edgecolor': 'white',
+          'axes.labelcolor': 'black',
+          'figure.facecolor': 'white',
+          'patch.edgecolor': 'white',
+          'text.color': 'black',
+          'xtick.color': 'black',
+          'ytick.color': 'black',
           'font.size' : 8,
           'axes.labelsize': 12,
           'xtick.labelsize': 8,
@@ -305,10 +241,7 @@ with row5_1:
     plot_x_per_team_selected = st.selectbox ("Which attribute do you want to analyze?", list(label_attr_dict_teams.keys()), key = 'attribute_team')
     plot_x_per_team_type = st.selectbox ("Which measure do you want to analyze?", types, key = 'measure_team')
 with row5_2:
-    if all_teams_selected != 'Select teams manually (choose below)' or selected_teams:
-        plot_x_per_team(plot_x_per_team_selected, plot_x_per_team_type)
-    else:
-        st.warning('Please select at least one team')
+    plot_x_per_team(plot_x_per_team_selected, plot_x_per_team_type)
 
 
 ### SEASON ANALYSIS ###
@@ -326,10 +259,7 @@ with row7_1:
     plot_x_per_season_selected = st.selectbox ("Which attribute do you want to analyze?", list(label_attr_dict.keys()), key = 'attribute_season')
     plot_x_per_season_type = st.selectbox ("Which measure do you want to analyze?", types, key = 'measure_season')
 with row7_2:
-    if all_teams_selected != 'Select teams manually (choose below)' or selected_teams:
-        plot_x_per_season(plot_x_per_season_selected,plot_x_per_season_type)
-    else:
-        st.warning('Please select at least one team')
+    plot_x_per_season(plot_x_per_season_selected,plot_x_per_season_type)
 
 ### CORRELATION ANALYSIS ###
 
@@ -341,7 +271,7 @@ with row10_1:
     st.markdown(" ")
     st.markdown(" ")
     st.subheader('Correlation of Game Stats')
-row11_spacer1, row11_1, row11_spacer2, row11_2, row11_spacer3  = st.columns((.2, 2.3, .4, 4.4, .2))
+row11_spacer1, row11_1, row11_spacer2, row11_2, row11_spacer3  = st.columns((.2, 2.3, .4, 3, .2))
 with row11_1:
     st.markdown("Investigate the correlation of attributes.")
     st.markdown("(📈) - Postive Correlation") 
@@ -351,8 +281,4 @@ with row11_1:
     y_axis_aspect2 = st.selectbox ("Which attribute do you want on the y-axis?", list(dict_correlation.keys()))
     x_axis_aspect1 = st.selectbox ("Which attribute do you want on the x-axis?", list(dict_correlation.keys()))
 with row11_2:
-    if all_teams_selected != 'Select teams manually (choose below)' or selected_teams:
-        plt_attribute_correlation(x_axis_aspect1, y_axis_aspect2)
-    else:
-        st.warning('Please select at least one team')
-    
+    plt_attribute_correlation(x_axis_aspect1, y_axis_aspect2)
