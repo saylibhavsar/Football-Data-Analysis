@@ -1,5 +1,5 @@
 # Football-Data-Analysis
 Web Scraping of English Premier League (football) data and prediction analysis
 
-Deployed app - [APP](https://github.com/saylibhavsar/Football-Data-Analysis/edit/main/README.md#:~:text=Deplyed%20app%20--,app,-Attach%20files%20by)
+Deployed app - [APP](https://share.streamlit.io/saylibhavsar/football-data-analysis/main/dashboard.py)
 
